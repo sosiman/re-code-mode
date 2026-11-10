@@ -1,0 +1,20 @@
+# dependencies / generated / third-party
+node_modules/
+skills-repos/
+tools-cache/
+data/re-catalog.json
+
+# machine-local UTCP configs (contain absolute paths) and secrets
+.utcp_config.json
+.utcp_rea_full.json
+.env
+.env.*
+*.pem
+*.key
+*.log
+
+# test artefacts and OS noise
+test/fixtures/hello*
+__pycache__/
+*.pyc
+.DS_Store

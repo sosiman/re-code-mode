@@ -1,0 +1,60 @@
+{
+  "elf_linux": {
+    "target": "ELF binary (Linux / embedded; C, C++, Go, Rust)",
+    "fast_triage_steps": [
+      "1. Identify (<1s): re.re_triage_binary({ path }) -> arch, stripped?, NX/PIE/canary/RELRO, language/compiler, SHA-256.",
+      "2. Capability inventory: re.re_imports_exports({ path, filter: 'socket|crypt|exec|ssl|open', kind: 'imports' }).",
+      "3. Interesting strings: re.re_extract_strings({ path, regex: 'https?://|/etc/|token|version', limit: 50 }).",
+      "4. Candidate functions: re.re_list_functions({ path, filter: 'main|init|handle|parse|auth|verify', limit: 30 }).",
+      "5. Selective decompilation of the 2-4 functions that matter: re.re_disassemble_function({ path, target: 'main', mode: 'decompile' })."
+    ],
+    "recommended_tools": ["radare2", "rabin2", "readelf", "objdump", "ghidra (headless)", "gdb"]
+  },
+  "pe_windows": {
+    "target": "PE executable / DLL (native or .NET)",
+    "fast_triage_steps": [
+      "1. re.re_triage_binary({ path }) -> native (MSVC/MinGW) vs managed (.NET), arch, sections.",
+      "2. Packing check: high-entropy sections or tiny import table -> re.re_firmware_scan({ path }) also reports UPX.",
+      "3. Import table by capability: re.re_imports_exports({ path, filter: 'CreateProcess|VirtualAlloc|Reg|Crypt|Internet' }).",
+      "4. Managed code: look up a .NET decompiler in the catalog (re.re_catalog_search({ query: 'dotnet' })); native code: list_functions + disassemble_function."
+    ],
+    "recommended_tools": ["rabin2", "radare2", "upx", "ghidra (headless)", "ILSpy / dnSpyEx (catalog)"]
+  },
+  "android_apk": {
+    "target": "Android APK / AAR / DEX (Java, Kotlin/R8, Flutter, React Native, Unity)",
+    "fast_triage_steps": [
+      "1. Fingerprint the framework: re.re_apk_inspect({ path, mode: 'triage' }) -> Flutter / React Native / Hermes / IL2CPP / Kotlin, DEX list, native libs.",
+      "2. Harvest endpoints cheaply: re.re_apk_inspect({ path, mode: 'apis' }) -> URLs and REST-looking routes found in DEX strings.",
+      "3. Native libraries: extract lib/*.so and run re.re_triage_binary + re.re_imports_exports({ filter: 'Java_|JNI' }).",
+      "4. For deep work decompile with jadx / apktool (see the android-reverse-engineering skill in skills-repos)."
+    ],
+    "recommended_tools": ["jadx", "apktool", "rabin2", "frida"]
+  },
+  "electron_js": {
+    "target": "Electron app (app.asar) / bundled JavaScript / WebAssembly",
+    "fast_triage_steps": [
+      "1. Locate resources/app.asar and list it without extracting everything (npx @electron/asar list).",
+      "2. Trace IPC channels (ipcMain.handle, ipcRenderer.invoke, contextBridge.exposeInMainWorld) with grep over the extracted main/preload bundles.",
+      "3. Native addons (*.node) can be triaged like any shared object with re.re_triage_binary."
+    ],
+    "recommended_tools": ["@electron/asar", "rabin2", "REA (optional, full mode)"]
+  },
+  "firmware_iot": {
+    "target": "Firmware image / bootloader / embedded filesystem (SquashFS, CramFS, JFFS2, U-Boot)",
+    "fast_triage_steps": [
+      "1. re.re_firmware_scan({ path }) -> embedded signatures and filesystems (binwalk) + UPX check.",
+      "2. Extract the filesystem with your preferred tool, then triage inner binaries with re.re_triage_binary.",
+      "3. Hunt configuration, certificates and services with re.re_extract_strings({ preset: 'secrets' | 'urls' })."
+    ],
+    "recommended_tools": ["binwalk", "radare2", "readelf", "file"]
+  },
+  "go_rust_packed": {
+    "target": "Go / Rust / PyInstaller / UPX-packed or stripped binaries",
+    "fast_triage_steps": [
+      "1. UPX: re.re_firmware_scan({ path }).upx_packed; unpack a COPY with `upx -d` before analysis.",
+      "2. Go: triage reports the language; list the program's own functions with re.re_list_functions({ filter: '^main\\\\.' }).",
+      "3. Stripped C/C++/Rust: work bottom-up - re.re_list_functions({ only_leaf: true, min_size: 32 }) then disassemble leaves first."
+    ],
+    "recommended_tools": ["upx", "rabin2", "radare2", "ghidra (headless)"]
+  }
+}

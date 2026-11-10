@@ -1,0 +1,26 @@
+{
+  "name": "re-code-mode",
+  "version": "1.0.0",
+  "description": "Layered reverse-engineering toolbox for AI agents, served through UTCP Code Mode so large outputs are filtered in a sandbox instead of your context window.",
+  "type": "module",
+  "license": "MIT",
+  "private": false,
+  "engines": { "node": ">=18" },
+  "bin": { "re-run": "bin/re-run.sh" },
+  "scripts": {
+    "setup": "bash scripts/setup.sh",
+    "catalog": "python3 tools/build_catalog.py",
+    "skills": "bash scripts/fetch-skills.sh",
+    "start": "node src/server.mjs",
+    "test": "node test/smoke.mjs"
+  },
+  "keywords": [
+    "reverse-engineering", "mcp", "utcp", "code-mode", "radare2", "binary-analysis",
+    "android", "jadx", "ai-agents", "security-research", "malware-analysis"
+  ],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "@utcp/code-mode-cli": "^0.1.1",
+    "zod": "^4.6.7"
+  }
+}
